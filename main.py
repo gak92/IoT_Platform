@@ -35,6 +35,7 @@ with app.app_context():
 #                    REST API 
 #================================================
 
+# Registering a new device
 @app.route('/register', methods=['POST'])
 def register_device():
     """Register a new device"""
@@ -47,6 +48,30 @@ def register_device():
     db.session.commit()
 
     return jsonify({"message": "Device registered successfully"}), 201
+
+
+# Receiving Sensor data via HTTP and added into the database
+@app.route('/data', methods=['POST'])
+def receive_data():
+    """Receive sensor data via HTTP"""
+    data = request.json
+    if not data or "device_id" not in data or "data" not in data:
+        return jsonify({"error": "Invalid request"}), 400
+
+    new_entry = SensorData(device_id=data["device_id"], data=json.dumps(data["data"]))
+    db.session.add(new_entry)
+    db.session.commit()
+
+    return jsonify({"message": "Data received"}), 200
+
+
+# Reading sensor data of the registered device by giving device id
+@app.route('/data/<device_id>', methods=['GET'])
+def get_device_data(device_id):
+    """Retrieve sensor data for a device"""
+    records = SensorData.query.filter_by(device_id=device_id).all()
+    return jsonify([{"device_id": r.device_id, "data": json.loads(r.data)} for r in records])
+
 
 @app.route('/')
 def test():
