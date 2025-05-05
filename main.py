@@ -12,7 +12,7 @@ app.config.from_pyfile('config.py')
 db = SQLAlchemy(app)
 
 # Initialize MQTT
-mqtt = Mqtt(app)
+# mqtt = Mqtt(app)
 
 # Define Device Model
 class Device(db.Model):
@@ -30,7 +30,23 @@ class SensorData(db.Model):
 # Create Database Tables
 with app.app_context():
     db.create_all()
-    
+
+#================================================
+#                    REST API 
+#================================================
+
+@app.route('/register', methods=['POST'])
+def register_device():
+    """Register a new device"""
+    data = request.json
+    if not data or "device_id" not in data:
+        return jsonify({"error": "Device ID required"}), 400
+
+    new_device = Device(device_id=data["device_id"], description=data.get("description"))
+    db.session.add(new_device)
+    db.session.commit()
+
+    return jsonify({"message": "Device registered successfully"}), 201
 
 @app.route('/')
 def test():
