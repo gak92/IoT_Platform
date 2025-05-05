@@ -6,6 +6,15 @@ import json
 
 # Initialize Falsk App
 app = Flask(__name__)
+app.config.from_pyfile('config.py')
+
+# Initialize Database
+db = SQLAlchemy(app)
+
+# Initialize MQTT
+mqtt = Mqtt(app)
+
+
 
 
 @app.route('/')
