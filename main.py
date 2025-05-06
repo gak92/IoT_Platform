@@ -3,16 +3,32 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_mqtt import Mqtt
 import json
+import logging
+logging.basicConfig(level=logging.DEBUG)
+#================================================
+#               Initializing App
+#================================================
 
 # Initialize Falsk App
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
+print("MQTT Config Loaded:", app.config["MQTT_BROKER_URL"], app.config["MQTT_BROKER_PORT"])
+
 
 # Initialize Database
 db = SQLAlchemy(app)
 
 # Initialize MQTT
-# mqtt = Mqtt(app)
+mqtt = Mqtt()
+# try:
+#     mqtt = Mqtt(app)
+#     print("Initialize MQTT..")
+# except Exception as e:
+#     print(f"Warning: MQTT broker not available. MQTT will be disabled.\n{e}")
+
+#================================================
+#               Database settings 
+#================================================
 
 # Define Device Model
 class Device(db.Model):
@@ -73,9 +89,51 @@ def get_device_data(device_id):
     return jsonify([{"device_id": r.device_id, "data": json.loads(r.data)} for r in records])
 
 
+
+#================================================
+#              Handling MQTT
+#================================================
+topic = 'iot/data'
+print("Registered Topic:", topic)
+
+@mqtt.on_connect()
+def handle_connect(client, userdata, flags, rc):
+    """Subscribe to MQTT topic on connection"""
+    print("MQTT Connected Callback triggered")
+    if rc == 0:
+        print('Connected to MQTT Broker!')
+        mqtt.subscribe(topic)
+        print(f"Subscribed to topic: {topic}")
+    else:
+        print('Failed to connect. Error code:', rc)
+
+
+@mqtt.on_message()
+def handle_mqtt_message(client, userdata, message):
+    """Handle incoming MQTT messages"""
+    print("MQTT Message Received!")
+    print(f"Topic: {message.topic}")
+    print(f"Payload: {message.payload.decode()}")
+
+    with app.app_context():
+        try:
+            payload = json.loads(message.payload.decode())
+            new_entry = SensorData(device_id=payload["device_id"], data=json.dumps(payload["data"]))
+            db.session.add(new_entry)
+            db.session.commit()
+            print(f"Data saved from MQTT: {payload}")
+        except Exception as e:
+            print(f"Error processing MQTT message: {e}")
+
+mqtt.init_app(app)
+print("Initialize MQTT..")
+
+#================================================
+#              Main App
+#================================================
 @app.route('/')
 def test():
-    return "Testing .. Flask App is working..."
+    return "Simple IoT Platform"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
