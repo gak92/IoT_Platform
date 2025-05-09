@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_mqtt import Mqtt
 import json
 import logging
+from datetime import datetime
 logging.basicConfig(level=logging.DEBUG)
 #================================================
 #               Initializing App
@@ -42,6 +43,7 @@ class SensorData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.String(50), nullable=False)
     data = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.TIMESTAMP, nullable=False, default=datetime.utcnow)
 
 # Create Database Tables
 with app.app_context():
