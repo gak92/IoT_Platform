@@ -1,5 +1,5 @@
 # Main Flask App
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_mqtt import Mqtt
@@ -43,7 +43,7 @@ class SensorData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     device_id = db.Column(db.ForeignKey('device.device_id'), nullable=False)
     data = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.TIMESTAMP, nullable=False, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     device = db.relationship('Device', back_populates="sensordatas")
 
 # Create Database Tables
@@ -140,9 +140,19 @@ print("Initialize MQTT..")
 #================================================
 #              Main App
 #================================================
+
+def parse_time(time):
+    return time.strftime('%d-%m-%Y %H:%M:%S')
+
 @app.route('/')
 def test():
-    return "Simple IoT Platform"
+    devices = Device.query.join(SensorData).order_by(SensorData.timestamp).all()
+    return render_template('index.html', devices=devices, parse_time=parse_time)
+@app.route('/device/<device_id>')
+def device(device_id):
+    device = Device.query.filter_by(device_id=device_id).join(SensorData).order_by(SensorData.timestamp).first()
+    print(device)
+    return render_template('device.html', device=device, parse_time=parse_time)
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=False)

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple IoT platform</title>
+    <style>
+        html, body {
+            width: 100%;
+        }
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple IoT platform</h1>
+    <table>
+        <caption>Devices</caption>
+        <thead>
+            <td>device id</td>
+            <td>description</td>
+            <td>last seen</td>
+            <td>actions</td>
+        </thead>
+        <tbody>
+        {% for device in devices %}
+            <tr" href=>
+                <td class="device_id">{{device.device_id}}</td>
+                <td class="description">{{device.description}}</td>
+                <td class="last_seen">
+                {% if device.sensordatas %}
+                    {{parse_time(device.sensordatas[0].timestamp)}}
+                {% endif %}
+                </td>
+                <td class="last_seen">
+                    <a href={{"device/" + device.device_id}}>check data</a>
+                </td>
+            
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

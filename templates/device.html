@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple IoT platform</title>
+    <style>
+        html, body {
+            width: 100%;
+        }
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <span>Device id: {{device.device_id}}</span>
+    <br>
+    <span>Description: {{device.description}}</span>
+    <br>
+    <br>
+    <table>
+        <caption>Data from device</caption>
+        <thead>
+            <td>timestamp</td>
+            <td>data</td>
+        </thead>
+        <tbody>
+        {% for sensordata in device.sensordatas %}
+            <tr" href=>
+                <td class="device_id">{{parse_time(sensordata.timestamp)}}</td>
+                <td class="description">{{sensordata.data}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
