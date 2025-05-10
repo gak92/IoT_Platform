@@ -1,6 +1,7 @@
 # Main Flask App
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from flask_mqtt import Mqtt
 import json
 import logging
@@ -33,21 +34,23 @@ mqtt = Mqtt()
 
 # Define Device Model
 class Device(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    device_id = db.Column(db.String(50), unique=True, nullable=False)
+    device_id = db.Column(db.String(50), unique=True, nullable=False, primary_key=True)
     description = db.Column(db.String(200), nullable=True)
-
+    sensordatas = db.relationship('SensorData', back_populates="device")
 
 # Define Sensor Data Model
 class SensorData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    device_id = db.Column(db.String(50), nullable=False)
+    device_id = db.Column(db.ForeignKey('device.device_id'), nullable=False)
     data = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.TIMESTAMP, nullable=False, default=datetime.utcnow)
+    device = db.relationship('Device', back_populates="sensordatas")
 
 # Create Database Tables
 with app.app_context():
     db.create_all()
+    # Enable foreign keys enforce
+    db.session.execute(text('PRAGMA FOREIGN_KEYS=1'))
 
 #================================================
 #                    REST API 
@@ -60,10 +63,12 @@ def register_device():
     data = request.json
     if not data or "device_id" not in data:
         return jsonify({"error": "Device ID required"}), 400
-
-    new_device = Device(device_id=data["device_id"], description=data.get("description"))
-    db.session.add(new_device)
-    db.session.commit()
+    try:
+        new_device = Device(device_id=data["device_id"], description=data.get("description"))
+        db.session.add(new_device)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"error": "sensor_id already exists"}), 400
 
     return jsonify({"message": "Device registered successfully"}), 201
 
@@ -75,10 +80,12 @@ def receive_data():
     data = request.json
     if not data or "device_id" not in data or "data" not in data:
         return jsonify({"error": "Invalid request"}), 400
-
-    new_entry = SensorData(device_id=data["device_id"], data=json.dumps(data["data"]))
-    db.session.add(new_entry)
-    db.session.commit()
+    try:
+        new_entry = SensorData(device_id=data["device_id"], data=json.dumps(data["data"]))
+        db.session.add(new_entry)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"error": "Invalid sensor_id"}), 400
 
     return jsonify({"message": "Data received"}), 200
 
