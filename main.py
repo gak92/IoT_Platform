@@ -95,6 +95,18 @@ def register_device_ui():
     
     return redirect(url_for('test'))
 
+# Deleting the device
+@app.route('/delete/<device_id>', methods=['POST'])
+def delete_device(device_id):
+    device = Device.query.filter_by(device_id=device_id).first()
+    if device:
+        # Delete all related sensor data first (if cascade isn't configured)
+        SensorData.query.filter_by(device_id=device_id).delete()
+        db.session.delete(device)
+        db.session.commit()
+        return redirect(url_for('test'))
+    return "Device not found", 404
+
 
 
 # Receiving Sensor data via HTTP and added into the database
