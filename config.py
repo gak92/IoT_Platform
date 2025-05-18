@@ -8,3 +8,4 @@ MQTT_TLS_ENABLED = False
 SECRET_KEY = "iotlabproject1"
 SQLALCHEMY_DATABASE_URI = "sqlite:///database.db"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+API_KEY = "my-super-secret-key"
