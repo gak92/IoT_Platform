@@ -63,7 +63,11 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ url_for('device', device_id=device.device_id) }}" class="btn btn-sm btn-outline-primary">View Data</a>
+                                {% if device.sensordatas %}
+                                    <a href="{{ url_for('device', device_id=device.device_id) }}" class="btn btn-sm btn-outline-primary">View Data</a>
+                                {% else %}
+                                    <span class="text-muted">No data</span>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor %}

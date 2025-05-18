@@ -170,7 +170,8 @@ def parse_time(time):
 
 @app.route('/')
 def test():
-    devices = Device.query.join(SensorData).order_by(SensorData.timestamp).all()
+    # devices = Device.query.join(SensorData).order_by(SensorData.timestamp).all()
+    devices = Device.query.order_by(Device.device_id).all()
     return render_template('index.html', devices=devices, parse_time=parse_time)
 
 
