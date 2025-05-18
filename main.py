@@ -6,7 +6,10 @@ from flask_mqtt import Mqtt
 import json
 import logging
 from datetime import datetime
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 logging.basicConfig(level=logging.DEBUG)
+
+
 #================================================
 #               Initializing App
 #================================================
@@ -71,6 +74,27 @@ def register_device():
         return jsonify({"error": "sensor_id already exists"}), 400
 
     return jsonify({"message": "Device registered successfully"}), 201
+
+
+# Registering device using UI
+@app.route('/register-ui', methods=['POST'])
+def register_device_ui():
+    device_id = request.form.get("device_id")
+    description = request.form.get("description")
+    
+    if not device_id:
+        return "Device ID is required", 400
+
+    existing = Device.query.filter_by(device_id=device_id).first()
+    if existing:
+        return "Device already exists", 409
+
+    new_device = Device(device_id=device_id, description=description)
+    db.session.add(new_device)
+    db.session.commit()
+    
+    return redirect(url_for('test'))
+
 
 
 # Receiving Sensor data via HTTP and added into the database

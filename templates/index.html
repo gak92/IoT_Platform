@@ -11,6 +11,31 @@
     <div class="container py-5">
         <h1 class="mb-4 text-center text-primary">Simple IoT Platform</h1>
 
+
+        <!-- Add Device Form -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Register New Device</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('register_device_ui') }}">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="device_id" placeholder="Device ID" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="description" placeholder="Description (optional)">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Register</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- Display registered devices -->
         <div class="card shadow-sm">
             <div class="card-header bg-dark text-white">
                 <h5 class="mb-0">Registered Devices</h5>
