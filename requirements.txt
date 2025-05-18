@@ -1,1 +1,7 @@
 # Dependencies
+Flask==2.3.2
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.25
+Flask-MQTT==1.1.1
+Flask-Login==0.6.3
+Flask-Bcrypt==1.0.1

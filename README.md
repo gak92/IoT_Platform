@@ -61,7 +61,8 @@ Then go to: ``` http://127.0.0.1:5000 ```
 }
 ```
 
-- POST /data
+- POST /data 
+`http://127.0.0.1:5000/data?key=<your-api-key>`
 ```
 {
   "device_id": "sensor_001",
@@ -72,10 +73,19 @@ Then go to: ``` http://127.0.0.1:5000 ```
 }
 ```
 
-- MQTT using CLI or MQTTX
+### MQTT using CLI
 ```
-mosquitto_pub -t "iot/data" -m '{"device_id": "sensor_001", "data": {"temperature": 25.5}}'
+mosquitto_pub -t "iot/data" -m '{"device_id": "sensor_001", "data": {"temperature": 25.5}}, "api_key": "<your-api-key>"'
 
+```
+
+### MQTT using MQTTX
+```
+{
+  "device_id": "sensor_003", 
+  "data": {"temperature": 3.11, "humidity": 3.19},
+  "api_key": "<your-api-key>"
+}
 ```
 
 ## 🌐 Web Dashboard
