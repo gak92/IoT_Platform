@@ -75,19 +75,6 @@
                                     </form>
                                 </div>
                             </td>
-                            
-                         
-                            <!-- <td>
-                                {% if device.sensordatas %}
-                                    <a href="{{ url_for('device', device_id=device.device_id) }}" class="btn btn-sm btn-outline-primary">View Data</a>
-                                {% else %}
-                                    <span class="text-muted">No data</span>
-                                {% endif %}
-                            
-                                <form method="POST" action="{{ url_for('delete_device', device_id=device.device_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this device?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger ms-2">Delete</button>
-                                </form>
-                            </td>                             -->
                         </tr>
                     {% endfor %}
                     </tbody>
