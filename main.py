@@ -1,12 +1,16 @@
-# Main Flask App
-from flask import Flask, request, jsonify, render_template
+# Main Flask Application
+
+#================================================
+#               Importing Libraries
+#================================================
+from flask import Flask, request, jsonify, render_template, redirect, url_for, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_mqtt import Mqtt
 import json
 import logging
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from functools import wraps
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -58,6 +62,17 @@ with app.app_context():
 #================================================
 #                    REST API 
 #================================================
+
+# API key Decorator
+def require_api_key(view_function):
+    @wraps(view_function)
+    def decorated_function(*args, **kwargs):
+        key = request.args.get('key') or request.headers.get('x-api-key')
+        if key != app.config['API_KEY']:
+            abort(401)  # Unauthorized
+        return view_function(*args, **kwargs)
+    return decorated_function
+
 
 # Registering a new device
 @app.route('/register', methods=['POST'])
@@ -111,6 +126,7 @@ def delete_device(device_id):
 
 # Receiving Sensor data via HTTP and added into the database
 @app.route('/data', methods=['POST'])
+@require_api_key
 def receive_data():
     """Receive sensor data via HTTP"""
     data = request.json
@@ -163,6 +179,10 @@ def handle_mqtt_message(client, userdata, message):
     with app.app_context():
         try:
             payload = json.loads(message.payload.decode())
+            if payload.get("api_key") != app.config["API_KEY"]:
+                print("Invalid API Key in MQTT message")
+                return
+            
             new_entry = SensorData(device_id=payload["device_id"], data=json.dumps(payload["data"]))
             db.session.add(new_entry)
             db.session.commit()
