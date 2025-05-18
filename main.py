@@ -11,6 +11,9 @@ import json
 import logging
 from datetime import datetime
 from functools import wraps
+from flask_login import UserMixin
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_bcrypt import Bcrypt
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -23,17 +26,49 @@ app = Flask(__name__)
 app.config.from_pyfile('config.py')
 print("MQTT Config Loaded:", app.config["MQTT_BROKER_URL"], app.config["MQTT_BROKER_PORT"])
 
+# Initialize login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'  # Redirects to login page if not authenticated
 
 # Initialize Database
 db = SQLAlchemy(app)
 
 # Initialize MQTT
 mqtt = Mqtt()
-# try:
-#     mqtt = Mqtt(app)
-#     print("Initialize MQTT..")
-# except Exception as e:
-#     print(f"Warning: MQTT broker not available. MQTT will be disabled.\n{e}")
+
+#================================================
+#               Login and Logout 
+#================================================
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+bcrypt = Bcrypt(app)
+
+# Login
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+        if user and bcrypt.check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for('test'))  # Dashboard
+        else:
+            return "Invalid credentials", 401
+
+    return render_template('login.html')
+
+# Logout
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 
 #================================================
 #               Database settings 
@@ -53,15 +88,33 @@ class SensorData(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     device = db.relationship('Device', back_populates="sensordatas")
 
+
+# Create User
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)  # Store hashed password
+
+
 # Create Database Tables
 with app.app_context():
     db.create_all()
     # Enable foreign keys enforce
     db.session.execute(text('PRAGMA FOREIGN_KEYS=1'))
 
+
 #================================================
 #                    REST API 
 #================================================
+
+# @app.route('/create-admin')
+# def create_admin():
+#     hashed_pw = bcrypt.generate_password_hash("admin123").decode('utf-8')
+#     new_user = User(username="admin", password=hashed_pw)
+#     db.session.add(new_user)
+#     db.session.commit()
+#     return "Admin user created."
+
 
 # API key Decorator
 def require_api_key(view_function):
@@ -93,6 +146,7 @@ def register_device():
 
 # Registering device using UI
 @app.route('/register-ui', methods=['POST'])
+@login_required
 def register_device_ui():
     device_id = request.form.get("device_id")
     description = request.form.get("description")
@@ -112,6 +166,7 @@ def register_device_ui():
 
 # Deleting the device
 @app.route('/delete/<device_id>', methods=['POST'])
+@login_required
 def delete_device(device_id):
     device = Device.query.filter_by(device_id=device_id).first()
     if device:
@@ -201,6 +256,7 @@ def parse_time(time):
     return time.strftime('%d-%m-%Y %H:%M:%S')
 
 @app.route('/')
+@login_required
 def test():
     # devices = Device.query.join(SensorData).order_by(SensorData.timestamp).all()
     devices = Device.query.order_by(Device.device_id).all()
@@ -208,6 +264,7 @@ def test():
 
 
 @app.route('/device/<device_id>')
+@login_required
 def device(device_id):
     device = Device.query.filter_by(device_id=device_id).join(SensorData).order_by(SensorData.timestamp).first()
     print(device)
