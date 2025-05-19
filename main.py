@@ -271,4 +271,4 @@ def device(device_id):
     return render_template('device.html', device=device, parse_time=parse_time)
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True, use_reloader=False, host='0.0.0.0')

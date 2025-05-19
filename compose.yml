@@ -1,0 +1,19 @@
+services:
+  web: 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MQTT_BROKER_URL: "iot_platform-mosquitto-1"
+      FLASK_ENV: production
+    # flask requires SIGINT to stop gracefully
+    # (default stop signal from Compose is SIGTERM)
+    stop_signal: SIGINT
+    ports:
+      - '5000:5000'
+  mosquitto:
+    image: eclipse-mosquitto
+    ports: 
+      - '1883:1883'
+    volumes:
+      - './config/mosquitto.conf:/mosquitto/config/mosquitto.conf'
