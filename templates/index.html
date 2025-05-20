@@ -76,6 +76,8 @@
                                     <form method="POST" action="{{ url_for('delete_device', device_id=device.device_id) }}" onsubmit="return confirm('Are you sure you want to delete this device?');">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>
+
+                                    <button class="btn btn-sm btn-info" onclick="alert('API-key for device {{device.device_id}} is {{device.api_key}}')">Show API-key</button>
                                 </div>
                             </td>
                         </tr>

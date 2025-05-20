@@ -23,6 +23,7 @@
             <div class="card-body">
                 <p><strong>Description:</strong> {{ device.description or 'No description provided' }}</p>
                 <p><strong>Total Entries:</strong> {{ device.sensordatas | length }}</p>
+                <button class="btn btn-sm btn-info" onclick="alert('API-key for device {{device.device_id}} is {{device.api_key}}')">Show API-key</button>
             </div>
 
             <div class="table-responsive">

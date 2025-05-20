@@ -9,6 +9,8 @@ from sqlalchemy import text
 from flask_mqtt import Mqtt
 import json
 import logging
+import random
+import string
 from datetime import datetime
 from functools import wraps
 from flask_login import UserMixin
@@ -79,6 +81,7 @@ class Device(db.Model):
     device_id = db.Column(db.String(50), unique=True, nullable=False, primary_key=True)
     description = db.Column(db.String(200), nullable=True)
     sensordatas = db.relationship('SensorData', back_populates="device")
+    api_key = db.Column(db.String(50), nullable=False)
 
 # Define Sensor Data Model
 class SensorData(db.Model):
@@ -116,12 +119,22 @@ with app.app_context():
 #     return "Admin user created."
 
 
+def valid_api_key(key):
+    device = Device.query.filter_by(api_key=key).first()
+    if device == None:
+        return False
+    return True
+
+def create_api_key(length = 8):
+    api_key = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    return api_key
+
 # API key Decorator
 def require_api_key(view_function):
     @wraps(view_function)
     def decorated_function(*args, **kwargs):
         key = request.args.get('key') or request.headers.get('x-api-key')
-        if key != app.config['API_KEY']:
+        if not valid_api_key(key):
             abort(401)  # Unauthorized
         return view_function(*args, **kwargs)
     return decorated_function
@@ -135,7 +148,7 @@ def register_device():
     if not data or "device_id" not in data:
         return jsonify({"error": "Device ID required"}), 400
     try:
-        new_device = Device(device_id=data["device_id"], description=data.get("description"))
+        new_device = Device(device_id=data["device_id"], description=data.get("description"), api_key=create_api_key())
         db.session.add(new_device)
         db.session.commit()
     except Exception as e:
@@ -158,7 +171,7 @@ def register_device_ui():
     if existing:
         return "Device already exists", 409
 
-    new_device = Device(device_id=device_id, description=description)
+    new_device = Device(device_id=device_id, description=description, api_key=create_api_key())
     db.session.add(new_device)
     db.session.commit()
     
@@ -234,7 +247,7 @@ def handle_mqtt_message(client, userdata, message):
     with app.app_context():
         try:
             payload = json.loads(message.payload.decode())
-            if payload.get("api_key") != app.config["API_KEY"]:
+            if not valid_api_key(payload.get("api_key")):
                 print("Invalid API Key in MQTT message")
                 return
             
